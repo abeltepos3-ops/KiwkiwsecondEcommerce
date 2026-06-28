@@ -1,0 +1,9 @@
+{
+  "appId": "com.kiwkiw.ecommerce",
+  "appName": "kiwkiw e-comers",
+  "webDir": "public",
+  "server": {
+    "url": "https://nama-website-ecommerce-anda.com",
+    "cleartext": true
+  }
+}
