@@ -13,6 +13,27 @@ use App\Models\Subscription;
 
 class CheckoutController extends Controller
 {
+    // Tambahkan di dalam class CheckoutController
+
+public function storeMobile(Request $request)
+{
+    // Tangkap data dari Flutter
+    // Sesuaikan nama kolom dengan struktur tabel orders lu
+    $order = \App\Models\Order::create([
+        'user_id' => $request->user_id, // ID user yang lagi login
+        'total_amount' => $request->total_amount,
+        'status' => 'pending', 
+        'shipping_method' => $request->shipping,
+        'shipping_address' => $request->alamat,
+        // tambahkan field lain yang ada di tabel lu
+    ]);
+
+    return response()->json([
+        'status' => 'success',
+        'message' => 'Checkout berhasil masuk ke database Admin!',
+        'order_id' => $order->id
+    ], 200);
+}
     public function index(Request $request)
     {
         // Ambil cart IDs dari request (jika ada), jika tidak ambil semua

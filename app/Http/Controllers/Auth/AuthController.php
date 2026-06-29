@@ -10,6 +10,10 @@ use Illuminate\Support\Facades\Hash;
 
 class AuthController extends Controller
 {
+    // ==============================================================
+    // 1. FUNGSI UNTUK WEB BROWSER (Kodingan Asli Lu)
+    // ==============================================================
+
     public function login()
     {
         return view('pages/auth/login');
@@ -93,7 +97,6 @@ class AuthController extends Controller
         return redirect()->route('home.index')->with('success', 'Anda telah berhasil mendaftar.');
     }
 
-
     public function logout()
     {
         Auth::logout();
@@ -103,5 +106,72 @@ class AuthController extends Controller
         request()->session()->regenerateToken();
 
         return redirect()->route('login')->with('success', 'Anda telah berhasil keluar.');
+    }
+
+    // ==============================================================
+    // 2. FUNGSI UNTUK MOBILE APP FLUTTER (REST API)
+    // ==============================================================
+
+    public function registerMobile(Request $request)
+    {
+        // Validasi data dari Flutter
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|string|email|unique:users',
+            'password' => 'required|string|min:6',
+        ]);
+
+        // Karena di web butuh kolom 'phone', kita buat nomor telepon dummy 
+        // secara otomatis agar tidak ditolak oleh database (karena form flutter belum ada input nomor hp)
+        $phone = $request->phone ?? '08' . rand(100000000, 999999999);
+
+        // Simpan ke database users
+        $user = User::create([
+            'name' => $request->name,
+            'email' => $request->email,
+            'password' => Hash::make($request->password),
+            'phone' => $phone, // Memasukkan nomor telepon
+            'role' => 'customer' // Atur role default
+        ]);
+
+        // Balikin respon ke Flutter (JSON)
+        return response()->json([
+            'status' => 'success',
+            'message' => 'User berhasil didaftarkan!',
+            'data' => $user
+        ], 201);
+    }
+
+    public function loginMobile(Request $request)
+    {
+        // Validasi input email & password dari Flutter
+        $request->validate([
+            'email' => 'required|email',
+            'password' => 'required|string',
+        ]);
+
+        // Cari user berdasarkan email
+        $user = User::where('email', $request->email)->first();
+
+        // Cek apakah user terdaftar dan password-nya cocok
+        if (!$user || !Hash::check($request->password, $user->password)) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Email atau password yang lu masukkan salah, mbutt!'
+            ], 401);
+        }
+
+        // Balikin data user dalam bentuk JSON kalau berhasil login
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Login Berhasil!',
+            'data' => [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'phone' => $user->phone,
+                'role' => $user->role ?? 'customer',
+            ]
+        ], 200);
     }
 }
